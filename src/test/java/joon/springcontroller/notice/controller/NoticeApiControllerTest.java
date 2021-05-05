@@ -1,7 +1,10 @@
 package joon.springcontroller.notice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import joon.springcontroller.notice.entity.Notice;
 import joon.springcontroller.notice.model.NoticeInput;
+import joon.springcontroller.notice.service.NoticeService;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +12,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import javax.annotation.PostConstruct;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -21,6 +27,9 @@ class NoticeApiControllerTest {
     MockMvc mvc;
     @Autowired
     ObjectMapper mapper;
+    @Autowired
+    NoticeService noticeService;
+
     @Test
     @DisplayName("Q6. 문자열 리턴 테스트")
     public void 문자열리턴() throws Exception{
@@ -28,6 +37,7 @@ class NoticeApiControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("공지사항입니다."));
     }
+
 
     @Test
     @DisplayName("Q7. NoticeEntity Json 반환")
@@ -157,6 +167,89 @@ class NoticeApiControllerTest {
                 .andExpect(jsonPath("$.content").value("내용내용"))
                 .andExpect(jsonPath("$.likes").value(0))
                 .andExpect(jsonPath("$.views").value(0))
+        ;
+    }
+    @Test
+    @DisplayName("Q16. 공지 상세 정보 보기")
+    public void getDetailNotice() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+        mvc.perform(get("/api/notice/1")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value("공지1"))
+                .andExpect(jsonPath("$.content").value("내용1"))
+        ;
+    }
+
+
+    @Test
+    @DisplayName("Q17. 공지 수정")
+    public void updateNotice() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+
+        NoticeInput input=NoticeInput.of("변경된 공지1", "내용변경");
+
+        mvc.perform(put("/api/notice/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(input))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value("변경된 공지1"))
+                .andExpect(jsonPath("$.content").value("내용변경"))
+        ;
+    }
+
+    @Test
+    @DisplayName("Q18. 공지 수정 예외 처리")
+    public void updateNoticeException() throws Exception{
+        NoticeInput input=NoticeInput.of("변경된 공지1", "내용변경");
+
+        mvc.perform(put("/api/notice/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(input))
+        )
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("해당 공지를 찾을 수 없습니다."))
+        ;
+    }
+    @Test
+    @DisplayName("Q19. 공지 일부 내용만 수정 하기")
+    public void updateNoticePart() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+
+        NoticeInput input=NoticeInput.of("변경된 공지1", null);
+
+        mvc.perform(put("/api/notice/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(input))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value("변경된 공지1"))
+                .andExpect(jsonPath("$.content").value("내용1"))
+        ;
+    }
+
+    @Test
+    @DisplayName("20. 조회수 증가하기")
+    public void increaseView() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+        mvc.perform(patch("/api/notice/1")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.views").value("1"))
+
+        ;
+        mvc.perform(patch("/api/notice/1")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.views").value("2"))
+
         ;
     }
 }

@@ -5,8 +5,11 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -19,8 +22,12 @@ public class Notice {
     @Column(name = "notice_id")
     private Long id;
 
+    @NotEmpty(message = "제목은 필수 입니다.")
+    @Size(min = 0, max = 50, message = "글자수는 50자 이하여야 합니다")
     private String title;
 
+    @NotEmpty(message = "내용은 필수 입니다.")
+    @Size(min = 0, max = 500, message = "글자수는 500자 이하여야 합니다")
     private String content;
 
 
@@ -30,27 +37,37 @@ public class Notice {
 
     private int views;
 
-    public Notice(Long id, String title, String content, LocalDate createDate) {
-        this.id = id;
-        this.title = title;
-        this.content = content;
-        this.createDate = createDate;
-        likes=0;
-        views=0;
-    }
+    private LocalDateTime lastModifiedDate;
 
     public static Notice of(Long id, String title, String content, LocalDate createDate) {
         return new Notice(id, title, content, createDate);
     }
 
+    public static Notice of( String title, String content, LocalDate createDate) {
+        return new Notice(title, content, createDate);
+    }
+    public static Notice of( String title, String content) {
+        return new Notice(title, content, LocalDate.now());
+    }
     public static Notice create(NoticeInput noticeInput) {
         return new Notice(noticeInput.getTitle(), noticeInput.getContent(), LocalDate.now());
+    }
+    public Notice(Long id, String title, String content, LocalDate createDate) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.createDate = createDate;
+        this.lastModifiedDate=LocalDateTime.now();
+        likes=0;
+        views=0;
     }
 
     public Notice(String title, String content, LocalDate createDate) {
         this.title = title;
         this.content = content;
         this.createDate = createDate;
+        this.lastModifiedDate=LocalDateTime.now();
+
         likes=0;
         views=0;
     }
@@ -58,8 +75,22 @@ public class Notice {
     public Notice(String title, String content) {
         this.title = title;
         this.content = content;
+        this.lastModifiedDate=LocalDateTime.now();
         likes=0;
         views=0;
     }
 
+    public void updateTitleAndContent(NoticeInput noticeInput) {
+        if(noticeInput.getTitle()!=null){
+            this.title=noticeInput.getTitle();
+        }
+        if(noticeInput.getContent()!=null){
+            this.content=noticeInput.getContent();
+        }
+        this.lastModifiedDate=LocalDateTime.now();
+    }
+
+    public void addView() {
+        views=views+1;
+    }
 }

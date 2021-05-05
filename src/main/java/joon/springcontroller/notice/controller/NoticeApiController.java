@@ -1,15 +1,19 @@
 package joon.springcontroller.notice.controller;
 
 import joon.springcontroller.notice.entity.Notice;
+import joon.springcontroller.notice.exception.NotFoundNoticeException;
 import joon.springcontroller.notice.model.NoticeInput;
 import joon.springcontroller.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -71,12 +75,48 @@ public class NoticeApiController {
     }
     @PostMapping("/api/notice6")
     public Notice addNoticeDb(@RequestBody NoticeInput noticeInput) {
-        Notice notice=noticeService.save(noticeInput);
+        Notice notice=noticeService.saveNoticeInput(noticeInput);
         return notice;
     }
     @PostMapping("/api/notice7")
     public Notice addNoticeDb2(@RequestBody NoticeInput noticeInput) {
-        Notice notice=noticeService.save(noticeInput);
+        Notice notice=noticeService.saveNoticeInput(noticeInput);
         return notice;
+    }
+
+    @GetMapping("/api/notice/{id}")
+    public Notice getDetailNotice(@PathVariable("id") Long noticeId){
+        return noticeService.findNotice(noticeId);
+    }
+
+   /* @PutMapping("/api/notice/{id}")
+    public Notice updateNotice(@PathVariable("id") Long noticeId, @RequestBody NoticeInput noticeInput){
+        return noticeService.noticeUpdate(noticeId, noticeInput);
+    }*/
+
+    @PutMapping("/api/notice/{id}")
+    public Notice updateNoticeNotFoundException(@PathVariable("id") Long noticeId, @RequestBody NoticeInput noticeInput){
+        Notice notice=null;
+        try {
+            notice = noticeService.noticeUpdate(noticeId, noticeInput);
+        }catch (NotFoundNoticeException e){
+                 throw e;
+        }
+        return notice;
+    }
+    @PatchMapping("/api/notice/{id}")
+    public Notice increaseView(@PathVariable("id") Long noticeId){
+        Notice notice=null;
+        try {
+            notice=noticeService.readNotice(noticeId);
+        }catch (NotFoundNoticeException e){
+            throw e;
+        }
+        return notice;
+    }
+
+    @ExceptionHandler(NotFoundNoticeException.class)
+    public ResponseEntity<?> notFountNoticeExceptionHandler(NotFoundNoticeException e){
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
