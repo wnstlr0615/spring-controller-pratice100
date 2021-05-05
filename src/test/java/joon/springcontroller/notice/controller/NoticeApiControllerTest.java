@@ -1,14 +1,17 @@
 package joon.springcontroller.notice.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import joon.springcontroller.notice.model.NoticeInput;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -16,7 +19,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class NoticeApiControllerTest {
     @Autowired
     MockMvc mvc;
-
+    @Autowired
+    ObjectMapper mapper;
     @Test
     @DisplayName("Q6. 문자열 리턴 테스트")
     public void 문자열리턴() throws Exception{
@@ -71,5 +75,88 @@ class NoticeApiControllerTest {
         ;
     }
 
+    @Test
+    @DisplayName("Q11. get형식으로 파라미터 입력받아 Notice 생성")
+    public void addNoticeUrlType() throws Exception{
+        mvc.perform(get("/api/notice3")
+                .param("title", "공지공지")
+                .param("content", "내용내용")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value("공지공지"))
+                .andExpect(jsonPath("$.content").value("내용내용"))
+                .andExpect(jsonPath("$.createDate").value("2021-01-30"))
 
+        ;
+    }
+
+    @Test
+    @DisplayName("Q12. post형식으로 파라미터 입력받아 Notice 생성")
+    public void addNoticePost() throws Exception{
+        mvc.perform(post("/api/notice4")
+                .param("title", "공지공지")
+                .param("content", "내용내용")
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value("공지공지"))
+                .andExpect(jsonPath("$.content").value("내용내용"))
+                .andExpect(jsonPath("$.createDate").value("2021-01-30"))
+
+        ;
+    }
+
+    @Test
+    @DisplayName("Q13. post 형식에 Json형식을  입력받아 Notice 생성")
+    public void addNoticePostBody() throws Exception{
+        NoticeInput input=NoticeInput.of("공지공지", "내용내용");
+
+        String inputJson = mapper.writeValueAsString(input);
+        mvc.perform(post("/api/notice5")
+                .contentType(MediaType.APPLICATION_JSON)
+               .content(inputJson)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value("공지공지"))
+                .andExpect(jsonPath("$.content").value("내용내용"))
+                .andExpect(jsonPath("$.createDate").value("2021-01-30"))
+        ;
+    }
+
+    @Test
+    @DisplayName("Q14. post 형식에 Json형식을  입력받아 Notice 생성")
+    public void addNoticeDb() throws Exception{
+        NoticeInput input=NoticeInput.of("공지공지", "내용내용");
+
+        String inputJson = mapper.writeValueAsString(input);
+        mvc.perform(post("/api/notice6")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputJson)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value("공지공지"))
+                .andExpect(jsonPath("$.content").value("내용내용"))
+        ;
+    }
+    @Test
+    @DisplayName("Q15. likes 와 views 추가")
+    public void addNoticeDb2() throws Exception{
+        NoticeInput input=NoticeInput.of("공지공지", "내용내용");
+
+        String inputJson = mapper.writeValueAsString(input);
+        mvc.perform(post("/api/notice7")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputJson)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value("공지공지"))
+                .andExpect(jsonPath("$.content").value("내용내용"))
+                .andExpect(jsonPath("$.likes").value(0))
+                .andExpect(jsonPath("$.views").value(0))
+        ;
+    }
 }

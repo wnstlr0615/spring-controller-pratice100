@@ -1,16 +1,21 @@
 package joon.springcontroller.notice.controller;
 
 import joon.springcontroller.notice.entity.Notice;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import joon.springcontroller.notice.model.NoticeInput;
+import joon.springcontroller.notice.service.NoticeService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 public class NoticeApiController {
+    final NoticeService noticeService;
+
     @GetMapping("/api/notice")
     public String getStringNotice(){
         return "공지사항입니다.";
@@ -46,7 +51,32 @@ public class NoticeApiController {
         notices.add(notice1);
         notices.add(notice2);
         notices.add(notice3);
-        return Long.valueOf(notices.size());
+        return (long) notices.size();
     }
-
+    /////////////////////////////////////////////////////////////////////////////////////Q11~
+    @GetMapping("/api/notice3")
+    public Notice addNoticeUrlType(@RequestParam String title, @RequestParam String content) {
+        Notice notice = Notice.of(1L, title, content, LocalDate.of(2021, 1, 30));
+        return notice;
+    }
+    @PostMapping("/api/notice4")
+    public Notice addNoticePost(@RequestParam String title, @RequestParam String content) {
+        Notice notice = Notice.of(1L, title, content, LocalDate.of(2021, 1, 30));
+        return notice;
+    }
+    @PostMapping("/api/notice5")
+    public Notice addNoticePost(@RequestBody NoticeInput noticeInput) {
+        Notice notice = Notice.of(1L, noticeInput.getTitle(), noticeInput.getContent(), LocalDate.of(2021, 1, 30));
+        return notice;
+    }
+    @PostMapping("/api/notice6")
+    public Notice addNoticeDb(@RequestBody NoticeInput noticeInput) {
+        Notice notice=noticeService.save(noticeInput);
+        return notice;
+    }
+    @PostMapping("/api/notice7")
+    public Notice addNoticeDb2(@RequestBody NoticeInput noticeInput) {
+        Notice notice=noticeService.save(noticeInput);
+        return notice;
+    }
 }

@@ -13,6 +13,7 @@ public class HelloController {
     public String firstMapping(){
         return "";
     }
+
     @RequestMapping(value = "/helloworld", method = RequestMethod.GET)
     @ResponseBody
     public String returnHello(){
