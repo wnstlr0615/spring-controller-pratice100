@@ -1,19 +1,18 @@
 package joon.springcontroller.notice.controller;
 
 import joon.springcontroller.notice.entity.Notice;
+import joon.springcontroller.notice.exception.AlreadyDeletedException;
 import joon.springcontroller.notice.exception.NotFoundNoticeException;
+import joon.springcontroller.notice.model.NoticeDeleteInput;
 import joon.springcontroller.notice.model.NoticeInput;
 import joon.springcontroller.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -63,21 +62,25 @@ public class NoticeApiController {
         Notice notice = Notice.of(1L, title, content, LocalDate.of(2021, 1, 30));
         return notice;
     }
+
     @PostMapping("/api/notice4")
     public Notice addNoticePost(@RequestParam String title, @RequestParam String content) {
         Notice notice = Notice.of(1L, title, content, LocalDate.of(2021, 1, 30));
         return notice;
     }
+
     @PostMapping("/api/notice5")
     public Notice addNoticePost(@RequestBody NoticeInput noticeInput) {
         Notice notice = Notice.of(1L, noticeInput.getTitle(), noticeInput.getContent(), LocalDate.of(2021, 1, 30));
         return notice;
     }
+
     @PostMapping("/api/notice6")
     public Notice addNoticeDb(@RequestBody NoticeInput noticeInput) {
         Notice notice=noticeService.saveNoticeInput(noticeInput);
         return notice;
     }
+
     @PostMapping("/api/notice7")
     public Notice addNoticeDb2(@RequestBody NoticeInput noticeInput) {
         Notice notice=noticeService.saveNoticeInput(noticeInput);
@@ -88,6 +91,7 @@ public class NoticeApiController {
     public Notice getDetailNotice(@PathVariable("id") Long noticeId){
         return noticeService.findNotice(noticeId);
     }
+
 
    /* @PutMapping("/api/notice/{id}")
     public Notice updateNotice(@PathVariable("id") Long noticeId, @RequestBody NoticeInput noticeInput){
@@ -104,7 +108,8 @@ public class NoticeApiController {
         }
         return notice;
     }
-    @PatchMapping("/api/notice/{id}")
+
+    @PatchMapping("/api/notice/{id}/hits")
     public Notice increaseView(@PathVariable("id") Long noticeId){
         Notice notice=null;
         try {
@@ -114,9 +119,71 @@ public class NoticeApiController {
         }
         return notice;
     }
+    /**
+     * Q21
+     * */
+    @DeleteMapping("/api/notices/{id}")
+    public ResponseEntity<?> deleteNotice(@PathVariable("id") Long noticeId){
+        try {
+            noticeService.deleteNotice(noticeId);
+        }catch (NotFoundNoticeException e){
+            throw e;
+        }
+        return ResponseEntity.ok().build();
+    }
 
+    /**
+     * Q22
+    * */
+    @DeleteMapping("/api/notices2/{id}") //21번과 동일
+    public ResponseEntity<?> deleteNoticeNotFoundException(@PathVariable("id") Long noticeId){
+        try {
+            noticeService.deleteNotice(noticeId);
+        }catch (NotFoundNoticeException e){
+            throw e;
+        }
+        return ResponseEntity.ok().build();
+    }
+    @DeleteMapping("/api/notices3/{id}") //21번과 동일
+    public ResponseEntity<?> deleteNoticeFlag(@PathVariable("id") Long noticeId){
+        try {
+            noticeService.deleteNoticeFlag(noticeId);
+        }catch (NotFoundNoticeException | AlreadyDeletedException e){
+            throw e;
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/api/notice")
+    public ResponseEntity<?> deleteNotices(@RequestBody NoticeDeleteInput noticeDeleteInput){
+        try {
+            noticeService.deleteNoticeList(noticeDeleteInput);
+        }catch (NotFoundNoticeException | AlreadyDeletedException e){
+            throw e;
+        }
+        return ResponseEntity.ok().build();
+    }
+
+
+    @DeleteMapping("/api/notices5")
+    public ResponseEntity<?> deleteNoticeAll(){
+        noticeService.deleteAll();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/notice8")
+    public Notice addNoticeDto(@RequestBody NoticeInput noticeInput) {
+        Notice notice = noticeService.saveNoticeInput(noticeInput);
+        return notice;
+    }
+
+    @ExceptionHandler(AlreadyDeletedException.class)
+    public ResponseEntity<?> alreadyDeletedException(AlreadyDeletedException e){
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
     @ExceptionHandler(NotFoundNoticeException.class)
     public ResponseEntity<?> notFountNoticeExceptionHandler(NotFoundNoticeException e){
         return ResponseEntity.badRequest().body(e.getMessage());
     }
+
 }

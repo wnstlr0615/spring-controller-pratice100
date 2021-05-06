@@ -1,6 +1,7 @@
 package joon.springcontroller.notice.entity;
 
 import joon.springcontroller.notice.model.NoticeInput;
+import joon.springcontroller.user.entity.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,14 +31,18 @@ public class Notice {
     @Size(min = 0, max = 500, message = "글자수는 500자 이하여야 합니다")
     private String content;
 
-
-    private LocalDate createDate;
-
     private int likes;
-
     private int views;
 
+    private LocalDate createDate;
     private LocalDateTime lastModifiedDate;
+
+    private boolean deleted;
+    private LocalDateTime deletedDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     public static Notice of(Long id, String title, String content, LocalDate createDate) {
         return new Notice(id, title, content, createDate);
@@ -53,13 +58,8 @@ public class Notice {
         return new Notice(noticeInput.getTitle(), noticeInput.getContent(), LocalDate.now());
     }
     public Notice(Long id, String title, String content, LocalDate createDate) {
+        this(title,content,createDate);
         this.id = id;
-        this.title = title;
-        this.content = content;
-        this.createDate = createDate;
-        this.lastModifiedDate=LocalDateTime.now();
-        likes=0;
-        views=0;
     }
 
     public Notice(String title, String content, LocalDate createDate) {
@@ -67,17 +67,13 @@ public class Notice {
         this.content = content;
         this.createDate = createDate;
         this.lastModifiedDate=LocalDateTime.now();
-
-        likes=0;
-        views=0;
+        this.deleted=false;
+        this.likes=0;
+        this.views=0;
     }
 
     public Notice(String title, String content) {
-        this.title = title;
-        this.content = content;
-        this.lastModifiedDate=LocalDateTime.now();
-        likes=0;
-        views=0;
+        this(title,content,LocalDate.now());
     }
 
     public void updateTitleAndContent(NoticeInput noticeInput) {
@@ -92,5 +88,10 @@ public class Notice {
 
     public void addView() {
         views=views+1;
+    }
+
+    public void deleted() {
+        deleted=true;
+        deletedDate=LocalDateTime.now();
     }
 }

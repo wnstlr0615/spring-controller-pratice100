@@ -1,12 +1,17 @@
 package joon.springcontroller.notice.service;
 
 import joon.springcontroller.notice.entity.Notice;
+import joon.springcontroller.notice.exception.AlreadyDeletedException;
 import joon.springcontroller.notice.exception.NotFoundNoticeException;
+import joon.springcontroller.notice.model.NoticeDeleteInput;
 import joon.springcontroller.notice.model.NoticeInput;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.rmi.AlreadyBoundException;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -68,5 +73,45 @@ public class NoticeService {
         Notice notice = findNotice.get();
         notice.updateTitleAndContent(noticeInput);
         return notice;
+    }
+
+    public void deleteNotice(Long noticeId) {
+        try {
+            noticeRepository.deleteById(noticeId);
+        }catch (IllegalArgumentException | EmptyResultDataAccessException e){
+            throw new NotFoundNoticeException("해당 공지를 찾을 수 없습니다.");
+        }
+    }
+    @Transactional
+    public void deleteNoticeFlag(Long noticeId) {
+        Notice findNotice = noticeRepository.findById(noticeId).orElseThrow(
+                () -> new NotFoundNoticeException("해당 공지를 찾을 수 없습니다."));
+        if(findNotice.isDeleted()){
+            throw new AlreadyDeletedException("이미 삭제된 글입니다.");
+        }
+        findNotice.deleted();
+    }
+    @Transactional
+    public void deleteNoticeList(NoticeDeleteInput noticeDeleteInput) {
+        List<Notice> notices = noticeRepository.findByIdIn(noticeDeleteInput.getDeleteIdList()).orElseThrow(
+                () -> new NotFoundNoticeException("해당 공지를 찾을 수 없습니다.")
+        );
+        if(notices.size()==0){
+            throw new NotFoundNoticeException("해당 공지를 찾을 수 없습니다.");
+        }
+        for (Notice notice : notices) {
+            if(notice.isDeleted()){
+                throw new AlreadyDeletedException("이미 삭제된 글입니다.");
+            }
+            notice.deleted();
+        }
+    }
+
+    public void deleteAll() {
+        noticeRepository.deleteAll();
+    }
+
+    public List<Notice> findAllNotice() {
+        return noticeRepository.findAll();
     }
 }

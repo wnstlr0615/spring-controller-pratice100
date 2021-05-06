@@ -2,9 +2,9 @@ package joon.springcontroller.notice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import joon.springcontroller.notice.entity.Notice;
+import joon.springcontroller.notice.model.NoticeDeleteInput;
 import joon.springcontroller.notice.model.NoticeInput;
 import joon.springcontroller.notice.service.NoticeService;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +12,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import javax.annotation.PostConstruct;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -237,14 +236,14 @@ class NoticeApiControllerTest {
     @DisplayName("20. 조회수 증가하기")
     public void increaseView() throws Exception{
         noticeService.save(Notice.of("공지1", "내용1"));
-        mvc.perform(patch("/api/notice/1")
+        mvc.perform(patch("/api/notice/1/hits")
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("1"))
                 .andExpect(jsonPath("$.views").value("1"))
 
         ;
-        mvc.perform(patch("/api/notice/1")
+        mvc.perform(patch("/api/notice/1/hits")
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value("1"))
@@ -252,4 +251,84 @@ class NoticeApiControllerTest {
 
         ;
     }
+    @Test
+    @DisplayName("21. 게시글 삭제 하기")
+    public void deleteNotice() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+        mvc.perform(delete("/api/notices/1")
+        )
+                .andExpect(status().isOk())
+        ;
+    }
+    @Test
+    @DisplayName("22. 게시글 삭제 하기 게시글이 조회되지 않는 경우 NotFoundException 발생")
+    public void deleteNoticeNotFoundException() throws Exception{
+        mvc.perform(delete("/api/notices2/1")
+        )
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("해당 공지를 찾을 수 없습니다."))
+        ;
+    }
+    @Test
+    @DisplayName("23. 게시글 삭제 flag 방식 사용")
+    public void deleteNoticeFlag() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+        mvc.perform(delete("/api/notices3/1")
+        )
+                .andExpect(status().isOk())
+        ;
+    }
+    @Test
+    @DisplayName("24. 게시글 여러개 삭제")
+    public void deleteNoticeOnlyUser() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+        noticeService.save(Notice.of("공지2", "내용2"));
+
+        NoticeDeleteInput noticeDeleteInput=new NoticeDeleteInput();
+        noticeDeleteInput.setDeleteIdList(List.of(1L, 2L));
+
+        mvc.perform(delete("/api/notice")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(noticeDeleteInput))
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+
+    @Test
+    @DisplayName("25. 게시글 전부 삭제")
+    public void deleteNoticeAll() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+        noticeService.save(Notice.of("공지2", "내용2"));
+
+        NoticeDeleteInput noticeDeleteInput=new NoticeDeleteInput();
+        noticeDeleteInput.setDeleteIdList(List.of(1L, 2L));
+
+        mvc.perform(delete("/api/notices5")
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+
+    @Test
+    @DisplayName("26. DTO 로 입력받아 저장 ")
+    public void addNoticeDto() throws Exception{
+        NoticeInput input=NoticeInput.of("공지공지", "내용내용");
+        String inputJson = mapper.writeValueAsString(input);
+
+        mvc.perform(post("/api/notice8")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputJson)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("1"))
+                .andExpect(jsonPath("$.title").value(input.getTitle()))
+                .andExpect(jsonPath("$.content").value(input.getContent()))
+                .andExpect(jsonPath("$.likes").value("0"))
+                .andExpect(jsonPath("$.views").value("0"))
+        ;
+    }
+
 }
