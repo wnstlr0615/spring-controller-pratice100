@@ -2,15 +2,19 @@ package joon.springcontroller.notice.service;
 
 import joon.springcontroller.notice.entity.Notice;
 import joon.springcontroller.notice.exception.AlreadyDeletedException;
+import joon.springcontroller.notice.exception.DuplicateNoticeException;
 import joon.springcontroller.notice.exception.NotFoundNoticeException;
 import joon.springcontroller.notice.model.NoticeDeleteInput;
 import joon.springcontroller.notice.model.NoticeInput;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.rmi.AlreadyBoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -113,5 +117,20 @@ public class NoticeService {
 
     public List<Notice> findAllNotice() {
         return noticeRepository.findAll();
+    }
+
+    public Page<Notice> findNoticePaging(PageRequest paging) {
+        return noticeRepository.findAll(paging);
+    }
+
+    @Transactional
+    public void addDuplicateNotice(NoticeInput input) {
+        List<Notice> findNotices = noticeRepository.findByTitle(input.getTitle());
+        LocalDateTime beforeOneMinutes = LocalDateTime.now().minusMinutes(1);
+        long count = findNotices.stream().filter(n -> n.getLastModifiedDate().isAfter(beforeOneMinutes)).count();
+        if(count!=0){
+            throw new DuplicateNoticeException("1분 이내에 등록된 동일한 공지사항이 존재합니다.");
+        }
+
     }
 }

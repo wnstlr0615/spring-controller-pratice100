@@ -2,17 +2,25 @@ package joon.springcontroller.notice.controller;
 
 import joon.springcontroller.notice.entity.Notice;
 import joon.springcontroller.notice.exception.AlreadyDeletedException;
+import joon.springcontroller.notice.exception.DuplicateNoticeException;
 import joon.springcontroller.notice.exception.NotFoundNoticeException;
 import joon.springcontroller.notice.model.NoticeDeleteInput;
 import joon.springcontroller.notice.model.NoticeInput;
+import joon.springcontroller.notice.model.ResponseError;
 import joon.springcontroller.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.Errors;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @RestController
 @RequiredArgsConstructor
@@ -175,6 +183,36 @@ public class NoticeApiController {
     public Notice addNoticeDto(@RequestBody NoticeInput noticeInput) {
         Notice notice = noticeService.saveNoticeInput(noticeInput);
         return notice;
+    }
+    @PostMapping("/api/notice9")
+    public ResponseEntity<?> addNoticeDtoError(@RequestBody @Valid NoticeInput noticeInput, Errors errors) {
+        if(errors.hasErrors()){
+            List<ResponseError> responseErrors=new ArrayList<>();
+            errors.getAllErrors().stream()
+                    .forEach(e->responseErrors.add(ResponseError.of((FieldError)e)));
+            return ResponseEntity.badRequest().body(responseErrors);
+
+        }
+        Notice notice = noticeService.saveNoticeInput(noticeInput);
+        return ResponseEntity.ok().build();
+    }
+    @GetMapping("/api/notice/latest/{size}")
+    public Page<Notice> getNoticeListSize(@PathVariable("size") int size){
+        return noticeService.findNoticePaging(PageRequest.of(0,size));
+    }
+
+    @PostMapping("/api/notice10")
+    public void duplicateNoticeException(@RequestBody NoticeInput input){
+        try {
+            noticeService.addDuplicateNotice(input);
+        } catch (DuplicateNoticeException e) {
+            throw e;
+        }
+
+    }
+    @ExceptionHandler(DuplicateNoticeException.class)
+    public ResponseEntity<?> duplicateNoticeExceptionHandler(DuplicateNoticeException e){
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 
     @ExceptionHandler(AlreadyDeletedException.class)

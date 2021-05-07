@@ -11,16 +11,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class NoticeApiControllerTest {
     @Autowired
     MockMvc mvc;
@@ -330,5 +335,55 @@ class NoticeApiControllerTest {
                 .andExpect(jsonPath("$.views").value("0"))
         ;
     }
+    @Test
+    @DisplayName("27. Dto 를 통해 정보 저장 에러 체크 ")
+    public void addNoticeDtoError() throws Exception{
+        NoticeInput input=NoticeInput.of("공지공지", null); //Dto Validation 체크
+        String inputJson = mapper.writeValueAsString(input);
 
+        mvc.perform(post("/api/notice9")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputJson)
+        )
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+
+        ;
+    }
+    //28번 생략
+
+    @Test
+    @DisplayName("29. 전달하는 갯수만큼 반환 ")
+    public void getNoticeListSize() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+        noticeService.save(Notice.of("공지2", "내용2"));
+        noticeService.save(Notice.of("공지3", "내용3"));
+        noticeService.save(Notice.of("공지4", "내용4"));
+        noticeService.save(Notice.of("공지5", "내용5"));
+
+        int size = 3;
+        mvc.perform(get("/api/notice/latest/"+ size)
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+
+        ;
+    }
+
+    @Test
+    @DisplayName("Q30. 동일한 제목이 1분이내 발생한 경우 중복으로 판단 ")
+    public void duplicateNoticeException() throws Exception{
+        noticeService.save(Notice.of("공지1", "내용1"));
+
+
+        mvc.perform(post("/api/notice10")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(Notice.of("공지1", "내용1")))
+        )
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("1분 이내에 등록된 동일한 공지사항이 존재합니다.")))
+
+        ;
+    }
 }
