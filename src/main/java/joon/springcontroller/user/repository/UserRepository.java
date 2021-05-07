@@ -1,4 +1,4 @@
-package joon.springcontroller.user.entity.repository;
+package joon.springcontroller.user.repository;
 
 import joon.springcontroller.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;

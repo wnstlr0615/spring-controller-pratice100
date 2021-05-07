@@ -26,6 +26,4 @@ public class NoticeInput {
         return new NoticeInput(title, content);
     }
 
-
-
 }

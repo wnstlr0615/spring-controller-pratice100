@@ -6,7 +6,7 @@ import joon.springcontroller.notice.exception.DuplicateNoticeException;
 import joon.springcontroller.notice.exception.NotFoundNoticeException;
 import joon.springcontroller.notice.model.NoticeDeleteInput;
 import joon.springcontroller.notice.model.NoticeInput;
-import joon.springcontroller.notice.model.ResponseError;
+import joon.springcontroller.common.model.ResponseError;
 import joon.springcontroller.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,7 +20,6 @@ import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 @RestController
 @RequiredArgsConstructor

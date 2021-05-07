@@ -44,8 +44,19 @@ public class Notice {
     @JoinColumn(name = "user_id")
     private User user;
 
+
+    public Notice(String title, String content, LocalDate createDate, User user) {
+        this.title = title;
+        this.content = content;
+        this.createDate = createDate;
+        this.user = user;
+    }
+
     public static Notice of(Long id, String title, String content, LocalDate createDate) {
         return new Notice(id, title, content, createDate);
+    }
+    public static Notice of( String title, String content, LocalDate createDate, User user) {
+        return new Notice(title, content, createDate, user);
     }
 
     public static Notice of( String title, String content, LocalDate createDate) {

@@ -9,6 +9,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 
 @Entity
@@ -20,19 +22,43 @@ public class User extends BaseTimeEntity {
     @Column(name = "user_id")
     private Long id;
 
-    @NotEmpty
+    @NotBlank
     @Column(unique = true)
     private String username;
 
-    @NotEmpty
+    @NotBlank
     private String password;
 
-    public static User of(String username, String password) {
-        return new User(username, password);
+    @Email
+    private String email;
+
+    private String phone;
+    public static User of(String username, String password, String email) {
+        return new User(username, password, email);
+    }
+    public static User of(String username, String password, String email, String phone) {
+        return new User(username, password, email, phone);
     }
 
-    public User(@NotEmpty String username, @NotEmpty String password) {
+    public User(String username, String password, String email, String phone) {
         this.username = username;
         this.password = password;
+        this.email = email;
+        this.phone = phone;
+    }
+
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
+    public User(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+    }
+
+    public void updatePhone(String phone) {
+        this.phone=phone;
     }
 }
