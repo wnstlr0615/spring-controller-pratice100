@@ -5,6 +5,8 @@ import joon.springcontroller.notice.entity.Notice;
 import joon.springcontroller.notice.service.NoticeService;
 import joon.springcontroller.user.entity.User;
 import joon.springcontroller.user.model.UserInput;
+import joon.springcontroller.user.model.UserInputFind;
+import joon.springcontroller.user.model.UserInputPassword;
 import joon.springcontroller.user.model.UserUpdate;
 import joon.springcontroller.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -118,6 +121,123 @@ class UserApiControllerTest {
         ;
     }
 
+    @Test
+    @DisplayName("Q36. 동일한 이메일 주소가 등록되어 있으면 예외 처리")
+    public void duplicationEmailException() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        UserInput input = UserInput.builder()
+                .username("joon1")
+                .password("1234")
+                .email("123@naver.com")
+                .phone("010-0000-0000")
+                .build();
+
+        mvc.perform(get("/api/user_36")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(input))
+        )
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+        ;
+    }
+    @Test
+    @DisplayName("Q37. 사용자 비밀번호 정상 수정")
+    public void updateUserPassword() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        UserInputPassword userInputPassword=UserInputPassword.of("1234", "1111");
+
+        int userId = 1;
+        mvc.perform(patch("/api/user/"+ userId +"/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(userInputPassword))
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+    @Test
+    @DisplayName("Q37. 사용자 비밀번호 예외 발생")
+    public void updateUserPassword_NotMatchException() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        UserInputPassword userInputPassword=UserInputPassword.of("12345", "1111");
+
+        int userId = 1;
+
+        mvc.perform(patch("/api/user/"+ userId +"/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(userInputPassword))
+        )
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+        ;
+    }
+    @Test
+    @DisplayName("Q38. 패스워드 암호화")
+    //@Rollback(value = false)
+    public void addUserTransFormBcrypt() throws Exception{
+        //given
+        UserInput input = UserInput.builder()
+                .username("joon1")
+                .password("1234")
+                .email("123@naver.com")
+                .phone("010-0000-0000")
+                .build();
+
+        mvc.perform(post("/api/user_38")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(input))
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+
+    @Test
+    @DisplayName("Q39. 사용자 삭제 게시글이 없으므로 성공")
+    public void deleteUser() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        int userId = 1;
+        mvc.perform(delete("/api/user/"+ userId)
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+    @Test
+    @DisplayName("Q39. 사용자 삭제 게시글이 존재하여 실패")
+    @Rollback(value = false)
+    public void deleteUserException() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        Notice notice1=createNotice("제목1", "내용1", user1);
+        int userId = 1;
+        mvc.perform(delete("/api/user/"+ userId)
+        )
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+        ;
+    }
+
+    @Test
+    @DisplayName("Q40. 이름과 전화번호로 사용자 찾기")
+    @Rollback(value = false)
+    public void findUserNameAndPhone() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        UserInputFind inputFind=UserInputFind.of("joon", "010-0000-000");
+        int userId = 1;
+        mvc.perform(get("/api/user_40")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(inputFind))
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
     private Notice createNotice(String title, String content, User user) {
         Notice notice = Notice.of(title, content, LocalDate.now(), user);
         noticeService.save(notice);

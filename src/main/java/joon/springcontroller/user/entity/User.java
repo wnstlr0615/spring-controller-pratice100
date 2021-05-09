@@ -11,7 +11,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 
 @Entity
 @NoArgsConstructor
@@ -30,6 +29,7 @@ public class User extends BaseTimeEntity {
     private String password;
 
     @Email
+    @Column(unique = true)
     private String email;
 
     private String phone;
@@ -60,5 +60,9 @@ public class User extends BaseTimeEntity {
 
     public void updatePhone(String phone) {
         this.phone=phone;
+    }
+
+    public void updatePassword(String newPassword) {
+        this.password=newPassword;
     }
 }
