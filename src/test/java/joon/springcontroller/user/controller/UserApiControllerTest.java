@@ -1,13 +1,14 @@
 package joon.springcontroller.user.controller;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import joon.springcontroller.notice.entity.Notice;
+import joon.springcontroller.notice.entity.NoticeLike;
+import joon.springcontroller.notice.repository.NoticeLikeRepository;
 import joon.springcontroller.notice.service.NoticeService;
 import joon.springcontroller.user.entity.User;
-import joon.springcontroller.user.model.UserInput;
-import joon.springcontroller.user.model.UserInputFind;
-import joon.springcontroller.user.model.UserInputPassword;
-import joon.springcontroller.user.model.UserUpdate;
+import joon.springcontroller.user.model.*;
 import joon.springcontroller.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -36,6 +40,8 @@ class UserApiControllerTest {
     UserService userService;
     @Autowired
     NoticeService noticeService;
+    @Autowired
+    NoticeLikeRepository noticeLikeRepository;
     @Autowired
     ObjectMapper mapper;
 
@@ -209,7 +215,6 @@ class UserApiControllerTest {
     }
     @Test
     @DisplayName("Q39. 사용자 삭제 게시글이 존재하여 실패")
-    @Rollback(value = false)
     public void deleteUserException() throws Exception{
         //given
         User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
@@ -224,7 +229,6 @@ class UserApiControllerTest {
 
     @Test
     @DisplayName("Q40. 이름과 전화번호로 사용자 찾기")
-    @Rollback(value = false)
     public void findUserNameAndPhone() throws Exception{
         //given
         User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
@@ -238,9 +242,99 @@ class UserApiControllerTest {
                 .andExpect(status().isOk())
         ;
     }
+    @Test
+    @DisplayName("Q41. 패스워드 초기화")
+    @Rollback(false)
+    public void resetUserPassword() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+
+        int userId = 1;
+        mvc.perform(get(String.format("/api/user/%d/password/reset", userId))
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+    @Test
+    @DisplayName("Q42. 사용자가 누른 좋아요 리스트 확인하기")
+    public void getUserLikeNotice() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        User user2 = createUser("joon1", "1234", "1234@naver.com", "010-0000-000");
+        Notice notice1=createNotice("제목1", "내용1", user1);
+        Notice notice3=createNotice("제목3", "내용3", user2);
+        Notice notice4=createNotice("제목4", "내용4", user1);
+
+        addNoticeLike(user1, notice3);
+
+        mvc.perform(get("/api/user/1/notice/like")
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+    @Test
+    @DisplayName("Q43. 패스워드가 일치하지 않을 경우 예외처리")
+    public void createToken_43() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        UserLogin userLogin=new UserLogin("123@naver.com", "1234");
+        mvc.perform(post("/api/user/login_43")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(userLogin))
+        )
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+        ;
+    }
+
+    @Test
+    @DisplayName("Q44. 토큰 생성")
+    public void createToken_44() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        UserLogin userLogin=new UserLogin("123@naver.com", "1234");
+        mvc.perform(post("/api/user/login_44")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsBytes(userLogin))
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+
+    @Test
+    @DisplayName("Q46. 토큰 만료로 인한 재 생성")
+    public void createRefreshToken_46() throws Exception{
+        //given
+        User user1 = createUser("joon", "1234", "123@naver.com", "010-0000-000");
+        String token=createToken(user1);
+        mvc.perform(patch("/api/user/login")
+                .header("J-Token", token)
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+        ;
+    }
+
+    private String createToken(User user1) {
+        Date expire= Timestamp.valueOf(LocalDateTime.now().plusMonths(1));
+        return JWT.create()
+                .withExpiresAt(expire)
+                .withIssuer(user1.getEmail())
+                .withSubject(user1.getUsername())
+                .withClaim("user_id", user1.getId())
+                .sign(Algorithm.HMAC512("joonjoon".getBytes()));
+    }
+
+    NoticeLike addNoticeLike(User user, Notice notice) {
+        return noticeLikeRepository.save(NoticeLike.of(user, notice));
+    }
+
     private Notice createNotice(String title, String content, User user) {
         Notice notice = Notice.of(title, content, LocalDate.now(), user);
-        noticeService.save(notice);
+        Notice saveNotice = noticeService.save(notice);
         return notice;
     }
 

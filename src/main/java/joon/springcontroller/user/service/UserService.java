@@ -1,6 +1,7 @@
 package joon.springcontroller.user.service;
 
 
+import joon.springcontroller.notice.entity.NoticeLike;
 import joon.springcontroller.notice.model.ResponseNotice;
 import joon.springcontroller.user.entity.User;
 import joon.springcontroller.user.model.*;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+
 public interface UserService {
      /**
       사용자 추가
@@ -36,4 +38,18 @@ public interface UserService {
      void deleteUser(Long id);
 
      UserResponse findUserNameAndPhone(UserInputFind userInputFind);
+
+     void resetUserPassword(Long userId);
+
+     List<NoticeLike> findUserLikeNotice(Long userId);
+
+     User userLogin(UserLogin userLogin);
+
+     User findUserByEmail(String email);
+
+     List<User> findAll();
+
+     long count();
+
+     List<User> findUserListByEmailAndUsernameAndPhone(UserSearch userSearch);
 }

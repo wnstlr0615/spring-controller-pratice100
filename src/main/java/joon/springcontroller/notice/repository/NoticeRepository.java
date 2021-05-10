@@ -1,8 +1,7 @@
-package joon.springcontroller.notice.service;
+package joon.springcontroller.notice.repository;
 
 import joon.springcontroller.notice.entity.Notice;
 import joon.springcontroller.user.entity.User;
-import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
