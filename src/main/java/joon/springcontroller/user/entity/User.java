@@ -1,14 +1,12 @@
 package joon.springcontroller.user.entity;
 
 import joon.springcontroller.common.entity.BaseTimeEntity;
+import joon.springcontroller.user.model.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
@@ -33,6 +31,16 @@ public class User extends BaseTimeEntity {
     private String email;
 
     private String phone;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus status=UserStatus.USING;
+
+    public boolean lockYn=false;
+
+    public boolean isLockYn() {
+        return lockYn;
+    }
+
     public static User of(String username, String password, String email) {
         return new User(username, password, email);
     }
@@ -64,5 +72,18 @@ public class User extends BaseTimeEntity {
 
     public void updatePassword(String newPassword) {
         this.password=newPassword;
+    }
+
+    public void updateStatus(UserStatus userStatus) {
+        this.status=userStatus;
+    }
+
+    public void updateUserLock() {
+        this.lockYn=true;
+    }
+
+    public void updateUserUnlock() {
+        this.lockYn=false;
+
     }
 }

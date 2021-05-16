@@ -52,4 +52,11 @@ public interface UserService {
      long count();
 
      List<User> findUserListByEmailAndUsernameAndPhone(UserSearch userSearch);
+
+     void updateStatus(Long userId, UserStatusInput input);
+
+     void userLock(Long userId);
+
+     void userUnlock(Long userId);
+
 }

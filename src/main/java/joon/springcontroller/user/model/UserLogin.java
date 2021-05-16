@@ -17,4 +17,8 @@ public class UserLogin {
 
     @NotBlank(message = "비밀번호 항목은 필수 입니다.")
     private String password;
+
+    public static UserLogin of(String email, String password) {
+        return new UserLogin(email, password);
+    }
 }

@@ -7,10 +7,10 @@ import joon.springcontroller.notice.model.ResponseNotice;
 import joon.springcontroller.notice.repository.NoticeLikeRepository;
 import joon.springcontroller.notice.repository.NoticeRepository;
 import joon.springcontroller.user.entity.User;
-import joon.springcontroller.user.exception.ExistEmailException;
-import joon.springcontroller.user.exception.PasswordNotMatchException;
-import joon.springcontroller.user.exception.UserNotFoundException;
+import joon.springcontroller.user.entity.UserLoginHistory;
+import joon.springcontroller.user.exception.*;
 import joon.springcontroller.user.model.*;
+import joon.springcontroller.user.repository.UserLoginHistoryRepository;
 import joon.springcontroller.user.repository.UserRepository;
 import joon.springcontroller.user.repository.query.QueryUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +34,7 @@ public class UserServiceImpl implements UserService{
     final BCryptPasswordEncoder encoder;
     final NoticeLikeRepository noticeLikeRepository;
     final QueryUserRepository queryUserRepository;
+    final UserLoginHistoryRepository userLoginHistoryRepository;
     @Override
     @Transactional
     public User addUser(UserInput userInput) {
@@ -95,6 +96,10 @@ public class UserServiceImpl implements UserService{
     @Transactional
     public void deleteUser(Long userId) {
         User findUser = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+        List<Notice> userNoticeList = noticeRepository.findByUser(findUser);
+        if(userNoticeList.size()>0){
+            throw new UserDeleteFailException("사용자가 작성한 공지사항이 있습니다.");
+        }
         userRepository.deleteById(userId);
     }
 
@@ -130,6 +135,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @Transactional
     public User userLogin(UserLogin userLogin) {
         User findUser = userRepository.findByEmail(userLogin.getEmail()).orElseThrow(() -> new UserNotFoundException("사용자 정보가 없습니다."));
         try {
@@ -139,6 +145,8 @@ public class UserServiceImpl implements UserService{
         } catch (PasswordNotMatchException | IllegalArgumentException e) {
             throw new PasswordNotMatchException("비밀번호가 일치하지 않습니다.");
         }
+        UserLoginHistory userLoginHistory=UserLoginHistory.of(findUser);
+        userLoginHistoryRepository.save(userLoginHistory);
         return findUser;
     }
 
@@ -160,6 +168,33 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<User> findUserListByEmailAndUsernameAndPhone(UserSearch userSearch) {
         return queryUserRepository.findUserByEmailAndUsernameAndPhone(userSearch);
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(Long userId, UserStatusInput input) {
+        User findUser = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("사용자 정보를 찾을 수 없습니다."));
+        findUser.updateStatus(input.getUserStatus());
+    }
+
+    @Override
+    @Transactional
+    public void userLock(Long userId) {
+        User findUser = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+        if(findUser.isLockYn()){
+            throw new AlreadyUserLockException("이미 사용자가 제한되었습니다.");
+        }
+        findUser.updateUserLock();
+    }
+
+    @Override
+    @Transactional
+    public void userUnlock(Long userId) {
+        User findUser = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("사용자 정보를 찾을 수 없습니다."));
+        if(!findUser.isLockYn()){
+            throw new AlreadyUserUnLockException("이미 접속제한이 해제된 사용자 입니다.");
+        }
+        findUser.updateUserUnlock();
     }
 
 
