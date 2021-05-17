@@ -59,4 +59,13 @@ public interface UserService {
 
      void userUnlock(Long userId);
 
+     UserSummary getUserStatusCount();
+
+     List<User> getTodayUser();
+
+     List<UserNoticeCount> getUserNoticeCount();
+
+     List<UserLogCount> getUserLogCount();
+
+     List<UserLogCount> getUserLikeBest();
 }

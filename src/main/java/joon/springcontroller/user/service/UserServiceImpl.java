@@ -6,6 +6,7 @@ import joon.springcontroller.notice.entity.NoticeLike;
 import joon.springcontroller.notice.model.ResponseNotice;
 import joon.springcontroller.notice.repository.NoticeLikeRepository;
 import joon.springcontroller.notice.repository.NoticeRepository;
+import joon.springcontroller.notice.repository.query.QueryNoticeRepository;
 import joon.springcontroller.user.entity.User;
 import joon.springcontroller.user.entity.UserLoginHistory;
 import joon.springcontroller.user.exception.*;
@@ -19,6 +20,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,6 +39,7 @@ public class UserServiceImpl implements UserService{
     final NoticeLikeRepository noticeLikeRepository;
     final QueryUserRepository queryUserRepository;
     final UserLoginHistoryRepository userLoginHistoryRepository;
+    final QueryNoticeRepository queryNoticeRepository;
     @Override
     @Transactional
     public User addUser(UserInput userInput) {
@@ -195,6 +200,36 @@ public class UserServiceImpl implements UserService{
             throw new AlreadyUserUnLockException("이미 접속제한이 해제된 사용자 입니다.");
         }
         findUser.updateUserUnlock();
+    }
+
+    @Override
+    public UserSummary getUserStatusCount() {
+        return queryUserRepository.getUserStatusCount();
+    }
+
+    @Override
+    public List<User> getTodayUser() {
+        LocalDate curDate=LocalDate.now();
+        LocalDateTime startDateTime=LocalDateTime.of(curDate, LocalTime.MIN);
+        LocalDateTime  endDateTime=LocalDateTime.of(curDate, LocalTime.MAX);
+        List<User> users=userRepository.findAllToday(startDateTime, endDateTime);
+        return users;
+    }
+
+    @Override
+    public List<UserNoticeCount> getUserNoticeCount() {
+        List<Object[]> result = noticeRepository.findAllWithUser();
+        return result.stream().map(objects -> UserNoticeCount.of((User) objects[0], (long) objects[1])).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserLogCount> getUserLogCount() {
+        return queryNoticeRepository.findUserLogCount();
+    }
+
+    @Override
+    public List<UserLogCount> getUserLikeBest() {
+        return queryNoticeRepository.findUserLikeBest();
     }
 
 

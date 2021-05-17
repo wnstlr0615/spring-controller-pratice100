@@ -2,6 +2,8 @@ package joon.springcontroller.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import joon.springcontroller.notice.entity.Notice;
+import joon.springcontroller.notice.entity.NoticeLike;
+import joon.springcontroller.notice.repository.NoticeLikeRepository;
 import joon.springcontroller.notice.service.NoticeService;
 import joon.springcontroller.user.entity.User;
 import joon.springcontroller.user.model.*;
@@ -17,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -34,6 +35,8 @@ class AdminUserControllerTest {
     ObjectMapper mapper;
     @Autowired
     private NoticeService noticeService;
+    @Autowired
+    private NoticeLikeRepository noticeLikeRepository;
 
     @Test
     @DisplayName("Q48. 사용자 목록과 사용자수 요청")
@@ -159,7 +162,93 @@ class AdminUserControllerTest {
                 .andExpect(status().isOk());
 
     }
+    @Test
+    @DisplayName("Q56.사용자 전체수와 상태별 회원수에 대한 정보 반환")
+    @Rollback(value = false)
+    public void userStatusCount() throws Exception {
+        //사용자 생성
+        User user1 = createUser("joon1", "1234", "123@naver.com", "010-0000-0000");
+        User user2 = createUser("joon2", "1234", "1233@naver.com", "010-0000-0000");
+        User user3 = createUser("joon3", "1234", "1234@naver.com", "010-0000-0000");
+        userService.updateStatus(user1.getId(), UserStatusInput.builder().userStatus(UserStatus.STOP).build()) ;
+        mvc.perform(get("/api/admin/user/status/count"))
+                .andDo(print())
+                .andExpect(status().isOk());
 
+    }
+    @Test
+    @DisplayName("Q57. 오늘 회원가입한 유저 정보 반환")
+    public void getTodayUser() throws Exception {
+        //사용자 생성
+        User user1 = createUser("joon1", "1234", "123@naver.com", "010-0000-0000");
+        User user2 = createUser("joon2", "1234", "1233@naver.com", "010-0000-0000");
+        User user3 = createUser("joon3", "1234", "1234@naver.com", "010-0000-0000");
+        mvc.perform(get("/api/admin/user/today"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    @DisplayName("Q58. 사용자별 공지 갯수 반환")
+    public void getUserNoticeCount() throws Exception {
+        //사용자 생성
+        User user1 = createUser("joon1", "1234", "123@naver.com", "010-0000-0000");
+        User user2 = createUser("joon2", "1234", "1233@naver.com", "010-0000-0000");
+        User user3 = createUser("joon3", "1234", "1234@naver.com", "010-0000-0000");
+
+        Notice notice1=createNotice("제목1", "내용1", user1);
+        Notice notice2=createNotice("제목2", "내용2", user2);
+        Notice notice3=createNotice("제목3", "내용3", user3);
+        Notice notice4=createNotice("제목4", "내용4", user1);
+
+
+        mvc.perform(get("/api/admin/user/notice/count"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    @DisplayName("Q59. 사용자별 공지 갯수와 좋아요 갯수반환")
+    public void getUserLogCount() throws Exception {
+        //사용자 생성
+        User user1 = createUser("joon1", "1234", "123@naver.com", "010-0000-0000");
+        User user2 = createUser("joon2", "1234", "1233@naver.com", "010-0000-0000");
+        User user3 = createUser("joon3", "1234", "1234@naver.com", "010-0000-0000");
+
+        Notice notice1=createNotice("제목1", "내용1", user1);
+        Notice notice2=createNotice("제목2", "내용2", user2);
+        Notice notice3=createNotice("제목3", "내용3", user3);
+        Notice notice4=createNotice("제목4", "내용4", user1);
+
+        addNoticeLike(user1, notice2);
+
+        mvc.perform(get("/api/admin/user/log/count"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+    }
+    @Test
+    @DisplayName("Q60. 좋아요를 가장 많이 한 사용자 목록  10개 반환")
+    public void bestLikeCount() throws Exception {
+        //사용자 생성
+        User user1 = createUser("joon1", "1234", "123@naver.com", "010-0000-0000");
+        User user2 = createUser("joon2", "1234", "1233@naver.com", "010-0000-0000");
+        User user3 = createUser("joon3", "1234", "1234@naver.com", "010-0000-0000");
+
+        Notice notice1=createNotice("제목1", "내용1", user1);
+        Notice notice2=createNotice("제목2", "내용2", user2);
+        Notice notice3=createNotice("제목3", "내용3", user3);
+        Notice notice4=createNotice("제목4", "내용4", user1);
+
+        addNoticeLike(user1, notice2);
+
+        mvc.perform(get("/api/admin/user/like/best"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+    }
     private User createUser(String name, String password, String email, String phone) {
         UserInput userInput=UserInput.builder()
                 .username(name)
@@ -175,5 +264,8 @@ class AdminUserControllerTest {
         Notice notice = Notice.of(title, content, LocalDate.now(), user);
         Notice saveNotice = noticeService.save(notice);
         return notice;
+    }
+    NoticeLike addNoticeLike(User user, Notice notice) {
+        return noticeLikeRepository.save(NoticeLike.of(user, notice));
     }
 }

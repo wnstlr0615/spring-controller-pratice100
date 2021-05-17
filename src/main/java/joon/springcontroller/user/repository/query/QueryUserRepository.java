@@ -1,9 +1,12 @@
 package joon.springcontroller.user.repository.query;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import joon.springcontroller.user.entity.User;
 import joon.springcontroller.user.model.UserSearch;
+import joon.springcontroller.user.model.UserStatus;
+import joon.springcontroller.user.model.UserSummary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,25 @@ public class QueryUserRepository {
                         phoneEq(userSearch.getPhone())
                 )
                 .fetch();
+    }
+
+    public UserSummary getUserStatusCount() {
+        List<Tuple> result = queryFactory.select(user.status, user.status.count())
+                .from(user)
+                .groupBy(user.status)
+                .fetch();
+        long usingUserCount=0;
+        long stopUserCount=0;
+        for (Tuple tuple : result) {
+            if(tuple.get(user.status)==UserStatus.USING){
+                usingUserCount+=tuple.get(user.status.count());
+            }else{
+                stopUserCount+=tuple.get(user.status.count());
+            }
+        }
+        long totalUserCount = usingUserCount + stopUserCount;
+        UserSummary userSummary=new UserSummary(stopUserCount, usingUserCount, totalUserCount);
+        return userSummary;
     }
 
     private BooleanExpression phoneEq(String phone) {

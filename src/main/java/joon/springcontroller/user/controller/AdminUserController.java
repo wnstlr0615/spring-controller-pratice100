@@ -91,6 +91,47 @@ public class AdminUserController {
         userService.userUnlock(userId);
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * Q56
+     * */
+    @GetMapping("/api/admin/user/status/count")
+    public ResponseEntity<?> userStatusCount(){
+        UserSummary userSummary=userService.getUserStatusCount();
+        return ResponseEntity.ok(ResponseMessage.success(userSummary));
+    }
+    /**
+     * Q57
+     * */
+    @GetMapping("/api/admin/user/today")
+    public ResponseEntity<?> todayUser(){
+        List<User> userList=userService.getTodayUser();
+        return ResponseEntity.ok(userList);
+    }
+    /**
+     * Q58
+     * */
+    @GetMapping("/api/admin/user/notice/count")
+    public ResponseEntity<?> userNoticeCount(){
+        List<UserNoticeCount> userNoticeCounts=userService.getUserNoticeCount();
+        return ResponseEntity.ok(ResponseMessage.success(userNoticeCounts));
+    }
+    /**
+     Q59
+     */
+    @GetMapping("/api/admin/user/log/count")
+    public ResponseEntity<?> userLogCount(){
+        List<UserLogCount> userLogCounts=userService.getUserLogCount();
+        return ResponseEntity.ok(userLogCounts);
+    }
+    /**
+     Q60
+     * */
+    @GetMapping("/api/admin/user/like/best")
+    public ResponseEntity<?> bestLikeCount(){
+        List<UserLogCount> userLogCounts=userService.getUserLikeBest();
+        return ResponseEntity.ok(ResponseMessage.success(userLogCounts));
+    }
     @ExceptionHandler(AlreadyUserUnLockException.class)
     public ResponseEntity<?> alreadyUserUnLockExceptionHandler(AlreadyUserUnLockException e){
         return ResponseEntity.badRequest().body(ResponseMessage.fail(e.getMessage()));
