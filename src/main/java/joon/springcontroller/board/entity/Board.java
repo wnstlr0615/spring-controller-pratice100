@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
@@ -33,7 +32,6 @@ public class Board extends BaseTimeEntity {
 
     private String contents;
 
-    private LocalDateTime regDate;
 
     private boolean topYn;
 

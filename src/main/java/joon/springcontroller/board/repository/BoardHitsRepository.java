@@ -1,5 +1,7 @@
-package joon.springcontroller.board.entity;
+package joon.springcontroller.board.repository;
 
+import joon.springcontroller.board.entity.Board;
+import joon.springcontroller.board.entity.BoardHits;
 import joon.springcontroller.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

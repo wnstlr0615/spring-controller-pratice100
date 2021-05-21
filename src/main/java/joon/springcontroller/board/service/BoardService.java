@@ -1,15 +1,8 @@
-package joon.springcontroller.board.controller;
+package joon.springcontroller.board.service;
 
-import joon.springcontroller.board.entity.Board;
-import joon.springcontroller.board.entity.BoardHits;
-import joon.springcontroller.board.entity.BoardHitsRepository;
-import joon.springcontroller.board.entity.BoardType;
-import joon.springcontroller.board.model.BoardPeriod;
-import joon.springcontroller.board.model.BoardTypeCount;
-import joon.springcontroller.board.model.BoardTypeInput;
-import joon.springcontroller.board.model.ServiceResult;
-import joon.springcontroller.board.repository.BoardRepository;
-import joon.springcontroller.board.repository.BoardTypeRepository;
+import joon.springcontroller.board.entity.*;
+import joon.springcontroller.board.model.*;
+import joon.springcontroller.board.repository.*;
 import joon.springcontroller.user.entity.User;
 import joon.springcontroller.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +22,9 @@ public class BoardService {
     private final BoardRepository boardRepository ;
     private final UserRepository userRepository;
     private final BoardHitsRepository boardHitsRepository;
-
+    private final BoardLikeRepository boardLikeRepository;
+    private final BoardBadReportRepository boardBadReportRepository;
+    private final BoardScrapRepository boardScrapRepository;
     @Transactional
     public ServiceResult addBoardType(BoardTypeInput boardTypeInput) {
         Optional<BoardType> optionalBoardType = boardTypeRepository.findByBoardName(boardTypeInput.getName());
@@ -134,6 +129,90 @@ public class BoardService {
             return ServiceResult.fail("이미 조회수가 있습니다.");
         }
         boardHitsRepository.save(BoardHits.of(user, board));
+        return ServiceResult.success();
+    }
+    @Transactional
+    public ServiceResult setBoardLike(Long boardId, String email) {
+        Optional<Board> optionalBoard = boardRepository.findById(boardId);
+        if(optionalBoard.isEmpty()){
+            return ServiceResult.fail("해당 게시글이 없습니다.");
+        }
+        Board board = optionalBoard.get();
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if(optionalUser.isEmpty()){
+           return ServiceResult.fail("회원 정보가 존재하지 않습니다.");
+        }
+        User user = optionalUser.get();
+        long count=boardLikeRepository.countByUserAndBoard(user, board);
+
+        if(count>0){
+           return ServiceResult.fail("이미 좋아요한 내용이 있습니다.");
+        }
+        BoardLike boardLike = BoardLike.of(user, board);
+        boardLikeRepository.save(boardLike);
+        return ServiceResult.success();
+    }
+    @Transactional
+    public ServiceResult setBoardUnLike(Long boardId, String email) {
+        Optional<Board> optionalBoard = boardRepository.findById(boardId);
+        if(optionalBoard.isEmpty()){
+            return ServiceResult.fail("해당 게시글이 없습니다.");
+        }
+        Board board = optionalBoard.get();
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if(optionalUser.isEmpty()){
+            return ServiceResult.fail("회원 정보가 존재하지 않습니다.");
+        }
+        User user = optionalUser.get();
+        Optional<BoardLike> optionalBoardLike=boardLikeRepository.findByUserAndBoard(user, board);
+
+        if(optionalBoardLike.isEmpty()){
+            return ServiceResult.fail("좋아요한 내용이 없습니다");
+        }
+        BoardLike boardLike = optionalBoardLike.get();
+        boardLikeRepository.delete(boardLike);
+        return ServiceResult.success();
+    }
+    @Transactional
+    public ServiceResult addBadBoard(Long boardId, String email, BoardBadReportInput badReportInput) {
+        Optional<Board> optionalBoard = boardRepository.findById(boardId);
+        if(optionalBoard.isEmpty()){
+            return ServiceResult.fail("해당 게시글이 없습니다.");
+        }
+        Board board = optionalBoard.get();
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if(optionalUser.isEmpty()){
+            return ServiceResult.fail("회원 정보가 존재하지 않습니다.");
+        }
+        User user = optionalUser.get();
+
+        BoardBadReport boardBadReport = BoardBadReport.of(user, board, badReportInput.getComments());
+        boardBadReportRepository.save(boardBadReport);
+
+        return ServiceResult.success();
+    }
+
+    public List<BoardBadReport> badReportList() {
+        return boardBadReportRepository.findAll();
+    }
+
+    public Object scrap(Long boardId, String email) {
+
+        Optional<Board> optionalBoard = boardRepository.findById(boardId);
+        if(optionalBoard.isEmpty()){
+            return ServiceResult.fail("해당 게시글이 없습니다.");
+        }
+        Board board = optionalBoard.get();
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+
+        if(optionalUser.isEmpty()){
+            return ServiceResult.fail("회원 정보가 존재하지 않습니다.");
+        }
+        User user = optionalUser.get();
+        BoardScrap.of(user, board);
         return ServiceResult.success();
     }
 }

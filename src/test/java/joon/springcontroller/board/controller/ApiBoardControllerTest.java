@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import joon.springcontroller.board.entity.Board;
 import joon.springcontroller.board.entity.BoardType;
+import joon.springcontroller.board.model.BoardBadReportInput;
 import joon.springcontroller.board.model.BoardPeriod;
 import joon.springcontroller.board.model.BoardTypeInput;
 import joon.springcontroller.board.model.BoardTypeUsing;
@@ -161,6 +162,56 @@ class ApiBoardControllerTest {
         String token = createToken(user);
         mvc.perform(put(String.format("/api/board/%d/hits", board.getId()))
                 .header("J-Token", token)
+        )
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Q71. 좋아요 증가시키기")
+    @Rollback(false)
+    public void setBoardLike() throws Exception {
+        BoardType boardType1 = createBoardType("과일");
+        User user = createUser("jjon", "1234", "123@naver.com", "010-000-0000");
+        Board board = createBoard(boardType1, user, "title", "content");
+        String token = createToken(user);
+        mvc.perform(patch(String.format("/api/board/%d/like", board.getId()))
+                .header("J-Token", token)
+        )
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+    @Test
+    @DisplayName("Q72. 좋아요 취소")
+    @Rollback(false)
+    public void setBoardUnLike() throws Exception {
+        BoardType boardType1 = createBoardType("과일");
+        User user = createUser("jjon", "1234", "123@naver.com", "010-000-0000");
+        Board board = createBoard(boardType1, user, "title", "content");
+        String token = createToken(user);
+        mvc.perform(patch(String.format("/api/board/%d/unlike", board.getId()))
+                .header("J-Token", token)
+        )
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Q73. 사용자 게시글 신고하기")
+    @Rollback(false)
+    public void addBadBoard() throws Exception {
+        BoardType boardType1 = createBoardType("과일");
+        User user = createUser("jjon", "1234", "123@naver.com", "010-000-0000");
+        Board board = createBoard(boardType1, user, "title", "content");
+        BoardBadReportInput badReportInput=BoardBadReportInput.builder()
+                                            .comments("글이 너무 짧다")
+                                            .build();
+
+        String token = createToken(user);
+        mvc.perform(put(String.format("/api/board/%d/badreport", board.getId()))
+                .header("J-Token", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(badReportInput))
         )
                 .andDo(print())
                 .andExpect(status().isOk());

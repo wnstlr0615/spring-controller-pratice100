@@ -3,6 +3,7 @@ package joon.springcontroller.board.controller;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import joon.springcontroller.board.entity.BoardType;
 import joon.springcontroller.board.model.*;
+import joon.springcontroller.board.service.BoardService;
 import joon.springcontroller.common.model.ResponseError;
 import joon.springcontroller.common.model.ResponseResult;
 import joon.springcontroller.common.util.JWTUtils;
@@ -20,7 +21,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 public class ApiBoardController {
-
     private final BoardService boardService;
     /**
      Q61
@@ -147,5 +147,61 @@ public class ApiBoardController {
         ServiceResult result=boardService.setBoardHits(boardId, email);
         return ResponseResult.success();
 
+    }
+    /**
+     Q71
+     **/
+    @PatchMapping ("/api/board/{id}/like")
+    public ResponseEntity<?> boardLike(@PathVariable("id") Long boardId , @RequestHeader("J-Token") String token){
+        String email="";
+        try {
+            email=JWTUtils.getIssuer(token);
+        } catch (JWTVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+        ServiceResult result=boardService.setBoardLike(boardId, email);
+        if(!result.isResult()){
+            return ResponseResult.fail(result.getMessage());
+        }
+        return ResponseResult.success();
+
+    }
+    /**
+     Q72
+     **/
+    @PatchMapping ("/api/board/{id}/unlike")
+    public ResponseEntity<?> boardUnLike(@PathVariable("id") Long boardId , @RequestHeader("J-Token") String token){
+        String email="";
+        try {
+            email=JWTUtils.getIssuer(token);
+        } catch (JWTVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+        ServiceResult result=boardService.setBoardUnLike(boardId, email);
+        if(!result.isResult()){
+            return ResponseResult.fail(result.getMessage());
+        }
+        return ResponseResult.success();
+
+    }
+    /**
+     Q73
+     **/
+    @PutMapping("/api/board/{id}/badreport")
+    public ResponseEntity<?> boardBadReport(@PathVariable("id") Long boardId ,
+                                            @RequestHeader("J-Token") String token,
+                                            @RequestBody BoardBadReportInput badReportInput
+                                            ){
+        String email="";
+        try {
+            email=JWTUtils.getIssuer(token);
+        } catch (JWTVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+        ServiceResult result=boardService.addBadBoard(boardId, email, badReportInput);
+        if(!result.isResult()){
+            return ResponseResult.fail(result.getMessage());
+        }
+        return ResponseResult.success();
     }
 }

@@ -1,5 +1,6 @@
 package joon.springcontroller.common.model;
 
+import joon.springcontroller.user.model.ResponseMessage;
 import org.springframework.http.ResponseEntity;
 
 public class ResponseResult {
@@ -8,5 +9,8 @@ public class ResponseResult {
     }
     public static ResponseEntity<?> success(){
         return ResponseEntity.ok().build();
+    }
+    public static ResponseEntity<?> success(Object o){
+        return ResponseEntity.ok().body(ResponseMessage.success(o));
     }
 }
