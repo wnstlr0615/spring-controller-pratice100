@@ -2,8 +2,12 @@ package joon.springcontroller.user.controller;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
+import joon.springcontroller.board.entity.Board;
+import joon.springcontroller.common.exception.BizException;
 import joon.springcontroller.common.model.ResponseError;
+import joon.springcontroller.common.model.ResponseResult;
 import joon.springcontroller.common.util.JWTUtils;
 import joon.springcontroller.notice.entity.NoticeLike;
 import joon.springcontroller.notice.model.ResponseNotice;
@@ -217,7 +221,26 @@ public class UserApiController {
         //클라이언트 쿠키/로컬스토리지/세션스토리지
         //블랙리스트 작성
     }
+    /**
+     * Q80
+     * */
+    @GetMapping("/api/user/board/post")
+    public ResponseEntity<?> myPost(@RequestHeader("J-Token")String token){
+        String email="";
+        try {
+            email = JWTUtils.getIssuer(token);
+        } catch (JWTVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+        List<Board> boardList = userService.postList(email);
+        return ResponseResult.success(boardList);
 
+    }
+
+    @ExceptionHandler(BizException.class)
+    public ResponseEntity<?> bizExceptionHandler(BizException e){
+        return ResponseResult.fail(e.getMessage());
+    }
     private String createToken(User user) {
         LocalDateTime expiredDateTime = LocalDateTime.now().plusMonths(1);
         Date expiredDate = java.sql.Timestamp.valueOf(expiredDateTime);

@@ -1,6 +1,8 @@
 package joon.springcontroller.user.service;
 
 
+import joon.springcontroller.board.entity.Board;
+import joon.springcontroller.board.model.ServiceResult;
 import joon.springcontroller.notice.entity.NoticeLike;
 import joon.springcontroller.notice.model.ResponseNotice;
 import joon.springcontroller.user.entity.User;
@@ -68,4 +70,10 @@ public interface UserService {
      List<UserLogCount> getUserLogCount();
 
      List<UserLogCount> getUserLikeBest();
+
+    ServiceResult addInterestUser(Long userId, String email);
+
+     ServiceResult removeInterestUser(Long userId, String email);
+
+     List<Board> postList(String email);
 }

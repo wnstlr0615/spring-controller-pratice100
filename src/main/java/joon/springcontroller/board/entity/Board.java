@@ -48,4 +48,7 @@ public class Board extends BaseTimeEntity {
         publishStartDate=startDate;
         publishEndDate=endDate;
     }
+    public String getUrl(){
+        return String.format("/board/%d", getId());
+    }
 }

@@ -1,5 +1,9 @@
 package joon.springcontroller.user.service;
 
+import joon.springcontroller.board.entity.Board;
+import joon.springcontroller.board.model.ServiceResult;
+import joon.springcontroller.board.repository.BoardRepository;
+import joon.springcontroller.common.exception.BizException;
 import joon.springcontroller.common.util.PasswordUtils;
 import joon.springcontroller.notice.entity.Notice;
 import joon.springcontroller.notice.entity.NoticeLike;
@@ -8,9 +12,11 @@ import joon.springcontroller.notice.repository.NoticeLikeRepository;
 import joon.springcontroller.notice.repository.NoticeRepository;
 import joon.springcontroller.notice.repository.query.QueryNoticeRepository;
 import joon.springcontroller.user.entity.User;
+import joon.springcontroller.user.entity.UserInterest;
 import joon.springcontroller.user.entity.UserLoginHistory;
 import joon.springcontroller.user.exception.*;
 import joon.springcontroller.user.model.*;
+import joon.springcontroller.user.repository.UserInterestRepository;
 import joon.springcontroller.user.repository.UserLoginHistoryRepository;
 import joon.springcontroller.user.repository.UserRepository;
 import joon.springcontroller.user.repository.query.QueryUserRepository;
@@ -40,6 +46,9 @@ public class UserServiceImpl implements UserService{
     final QueryUserRepository queryUserRepository;
     final UserLoginHistoryRepository userLoginHistoryRepository;
     final QueryNoticeRepository queryNoticeRepository;
+    final UserInterestRepository userInterestRepository;
+    final BoardRepository boardRepository;
+
     @Override
     @Transactional
     public User addUser(UserInput userInput) {
@@ -230,6 +239,57 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<UserLogCount> getUserLikeBest() {
         return queryNoticeRepository.findUserLikeBest();
+    }
+
+    @Override
+    @Transactional
+    public ServiceResult addInterestUser(Long userId, String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if(optionalUser.isEmpty()){
+            return ServiceResult.fail("회원 정보가 존재하지 않습니다.");
+        }
+        User user = optionalUser.get();
+        Optional<User> optionalInteresetUser = userRepository.findById(userId);
+        if(optionalInteresetUser.isEmpty()){
+            return ServiceResult.fail("관심사용자에 추가할 회원 정보가 존재하지 않습니다.");
+        }
+        User interestUser = optionalInteresetUser.get();
+        if(user.getId()==interestUser.getId()){
+            return ServiceResult.fail(" 자기 자신은 추가할 수 없습니다 ");
+        }
+        if(userInterestRepository.countByUserAndInterestUser(user, interestUser)>0){
+            return ServiceResult.fail("이미 관심사용자 목록에 추가하였습니다.");
+        }
+        UserInterest userInterest = UserInterest.of(user, interestUser);
+        userInterestRepository.save(userInterest);
+        return ServiceResult.success();
+    }
+
+    @Override
+    @Transactional
+    public ServiceResult removeInterestUser(Long userId, String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if(optionalUser.isEmpty()){
+            return ServiceResult.fail("회원 정보가 존재하지 않습니다.");
+        }
+        User user = optionalUser.get();
+        Optional<User> optionalInteresetUser = userRepository.findById(userId);
+        if(optionalInteresetUser.isEmpty()){
+            return ServiceResult.fail("관심사용자에 추가할 회원 정보가 존재하지 않습니다.");
+        }
+        User interestUser=optionalInteresetUser.get();
+        UserInterest userInterest = UserInterest.of(user, interestUser);
+        userInterestRepository.delete(userInterest);
+        return ServiceResult.success();
+    }
+
+    @Override
+    public List<Board> postList(String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if(optionalUser.isEmpty()) throw new BizException("회원정보가 존재하지 않습니다.");
+        User user = optionalUser.get();
+        List<Board> boardList = boardRepository.findAllByUser(user);
+        return boardList;
     }
 
 
