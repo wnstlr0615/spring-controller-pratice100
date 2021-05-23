@@ -5,6 +5,9 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import joon.springcontroller.board.entity.Board;
+import joon.springcontroller.board.entity.BoardComment;
+import joon.springcontroller.board.model.ServiceResult;
+import joon.springcontroller.board.service.BoardService;
 import joon.springcontroller.common.exception.BizException;
 import joon.springcontroller.common.model.ResponseError;
 import joon.springcontroller.common.model.ResponseResult;
@@ -16,6 +19,7 @@ import joon.springcontroller.user.exception.ExistEmailException;
 import joon.springcontroller.user.exception.PasswordNotMatchException;
 import joon.springcontroller.user.exception.UserNotFoundException;
 import joon.springcontroller.user.model.*;
+import joon.springcontroller.user.service.PointService;
 import joon.springcontroller.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,7 +38,9 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class UserApiController {
-    final UserService userService;
+    private final UserService userService;
+    private final BoardService boardService;
+    private final PointService pointService;
 
     @PostMapping("/api/user_31")
     public ResponseEntity<?> addUser(@RequestBody @Valid UserInput userInput, Errors errors){
@@ -232,10 +238,41 @@ public class UserApiController {
         } catch (JWTVerificationException e) {
             return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
         }
-        List<Board> boardList = userService.postList(email);
+        List<Board> boardList = boardService.postList(email);
         return ResponseResult.success(boardList);
 
     }
+    /**
+     * Q81
+     * */
+    @GetMapping("/api/user/board/comment")
+    public ResponseEntity<?> myCommnets(@RequestHeader("J-Token")String token) {
+        String email = "";
+        try {
+            email = JWTUtils.getIssuer(token);
+        } catch (JWTVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+        List<BoardComment> boardCommentList = boardService.commentList(email);
+        return ResponseResult.success(boardCommentList);
+    }
+    /**
+     * Q82
+     * */
+    @PostMapping("/api/user/point")
+    public ResponseEntity<?> userPoint(@RequestHeader("J-Token") String token,
+                                       @RequestBody UserPointInput userPointInput){
+        String email = "";
+        try {
+            email = JWTUtils.getIssuer(token);
+        } catch (JWTVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+        ServiceResult result=pointService.addPoint(email, userPointInput);
+        return ResponseResult.result(result);
+
+    }
+
 
     @ExceptionHandler(BizException.class)
     public ResponseEntity<?> bizExceptionHandler(BizException e){

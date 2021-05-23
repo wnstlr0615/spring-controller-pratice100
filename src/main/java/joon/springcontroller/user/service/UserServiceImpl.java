@@ -1,9 +1,8 @@
 package joon.springcontroller.user.service;
 
-import joon.springcontroller.board.entity.Board;
 import joon.springcontroller.board.model.ServiceResult;
+import joon.springcontroller.board.repository.BoardCommentsRepository;
 import joon.springcontroller.board.repository.BoardRepository;
-import joon.springcontroller.common.exception.BizException;
 import joon.springcontroller.common.util.PasswordUtils;
 import joon.springcontroller.notice.entity.Notice;
 import joon.springcontroller.notice.entity.NoticeLike;
@@ -48,6 +47,7 @@ public class UserServiceImpl implements UserService{
     final QueryNoticeRepository queryNoticeRepository;
     final UserInterestRepository userInterestRepository;
     final BoardRepository boardRepository;
+     final BoardCommentsRepository boardCommentRepository;
 
     @Override
     @Transactional
@@ -283,14 +283,6 @@ public class UserServiceImpl implements UserService{
         return ServiceResult.success();
     }
 
-    @Override
-    public List<Board> postList(String email) {
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-        if(optionalUser.isEmpty()) throw new BizException("회원정보가 존재하지 않습니다.");
-        User user = optionalUser.get();
-        List<Board> boardList = boardRepository.findAllByUser(user);
-        return boardList;
-    }
 
 
     private void sendSMS(String message) {

@@ -1,9 +1,11 @@
 package joon.springcontroller.board.controller;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import joon.springcontroller.board.entity.Board;
 import joon.springcontroller.board.entity.BoardType;
 import joon.springcontroller.board.model.*;
 import joon.springcontroller.board.service.BoardService;
+import joon.springcontroller.common.exception.BizException;
 import joon.springcontroller.common.model.ResponseError;
 import joon.springcontroller.common.model.ResponseResult;
 import joon.springcontroller.common.util.JWTUtils;
@@ -204,4 +206,19 @@ public class ApiBoardController {
         }
         return ResponseResult.success();
     }
+
+    /**
+     Q85
+     **/
+    @GetMapping("/api/board/{id}")
+    public ResponseEntity<?> detail(@PathVariable("id")Long boardId){
+        Board board=null;
+        try {
+            board=boardService.detail(boardId);
+        } catch (BizException e) {
+            return ResponseResult.fail(e.getMessage());
+        }
+        return ResponseResult.success(board);
+    }
+
 }

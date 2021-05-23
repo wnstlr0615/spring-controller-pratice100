@@ -1,5 +1,6 @@
 package joon.springcontroller.user.entity;
 
+import joon.springcontroller.user.model.UserPointInput;
 import joon.springcontroller.user.model.UserPointType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,4 +29,12 @@ public class UserPoint {
 
     @Column
     private int point;
+
+    public static UserPoint of(User user, UserPointInput userPointInput) {
+        return UserPoint.builder()
+                .user(user)
+                .userPointType(userPointInput.getPointType())
+                .point((userPointInput.getPointType().getValue()))
+                .build();
+    }
 }

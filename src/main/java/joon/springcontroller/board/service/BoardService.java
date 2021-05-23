@@ -3,6 +3,7 @@ package joon.springcontroller.board.service;
 import joon.springcontroller.board.entity.*;
 import joon.springcontroller.board.model.*;
 import joon.springcontroller.board.repository.*;
+import joon.springcontroller.common.exception.BizException;
 import joon.springcontroller.user.entity.User;
 import joon.springcontroller.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class BoardService {
     private final BoardBadReportRepository boardBadReportRepository;
     private final BoardScrapRepository boardScrapRepository;
     private final BoardBookMarkRepository boardBookMarkRepository;
+    private final BoardCommentsRepository boardCommentRepository;
 
     @Transactional
     public ServiceResult addBoardType(BoardTypeInput boardTypeInput) {
@@ -268,5 +270,29 @@ public class BoardService {
         BoardBookmark boardBookmark=BoardBookmark.of(user, board);
         boardBookMarkRepository.delete(boardBookmark);
         return ServiceResult.success();
+    }
+
+    public List<Board> postList(String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if(optionalUser.isEmpty()) throw new BizException("회원정보가 존재하지 않습니다.");
+        User user = optionalUser.get();
+        List<Board> boardList = boardRepository.findAllByUser(user);
+        return boardList;
+    }
+
+    public List<BoardComment> commentList(String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if(optionalUser.isEmpty()) throw new BizException("회원정보가 존재하지 않습니다.");
+        User user = optionalUser.get();
+        List<BoardComment> boardCommentList=boardCommentRepository.findAllByUser(user);
+        return boardCommentList;
+    }
+
+    public Board detail(Long boardId) {
+        Optional<Board> optionalBoard = boardRepository.findById(boardId);
+        if (optionalBoard.isEmpty()) {
+            throw new BizException("게시글이 존재하지 않습니다.");
+        }
+        return optionalBoard.get();
     }
 }

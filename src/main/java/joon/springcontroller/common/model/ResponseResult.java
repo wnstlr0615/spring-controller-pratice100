@@ -4,6 +4,8 @@ import joon.springcontroller.board.model.ServiceResult;
 import joon.springcontroller.user.model.ResponseMessage;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 public class ResponseResult {
     public static ResponseEntity<?> fail(String msg){
         return ResponseEntity.badRequest().body(msg);
@@ -19,5 +21,9 @@ public class ResponseResult {
             return fail(result.getMessage());
         }
         return success();
+    }
+
+    public static ResponseEntity<?> fail(String message, List<ResponseError> errorList) {
+        return ResponseEntity.badRequest().body(errorList);
     }
 }
